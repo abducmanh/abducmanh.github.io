@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get 2FA Authenticator</title>
-        <link rel="icon" href="favicon.ico">
+    <title>Liquid Glass 2FA Authenticator</title>
+    <link rel="icon" href="favicon.ico">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -15,423 +15,343 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.2/otpauth.umd.min.js"></script>
 
     <style>
-        /* --- CORE THEME: CRYSTAL OS --- */
+        /* --- CORE THEME: LIQUID GLASS (WWDC25 GRID) --- */
         body {
-            font-family: 'Inter', sans-serif; /* Clean Apple-like Font */
-            background-color: #f2f2f7;
+            font-family: 'Inter', sans-serif;
+            background-color: #dcdce2; 
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 80px 80px; 
+            background-attachment: fixed;
+            background-position: center top;
             margin: 0; padding: 0;
             min-height: 100vh;
             color: #1d1d1f;
             overflow-x: hidden;
         }
 
-        #fluid-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-            filter: blur(80px) saturate(1.2); 
-            opacity: 0.6; pointer-events: none;
-        }
-
-        /* --- GLASS COMPONENTS --- */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        /* --- APPLE LIQUID GLASS COMPONENTS --- */
+        .liquid-glass, .liquid-pill, .liquid-card, .modal-glass {
+            background: rgba(255, 255, 255, 0.01); 
+            backdrop-filter: brightness(1.02);
+            -webkit-backdrop-filter: brightness(1.02);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            
+            /* Bóng đổ nhẹ tỏa đều, vệt sáng tinh tế tập trung vào viền trên */
             box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.05),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-            border-radius: 32px;
-            position: relative; overflow: hidden;
-            transition: all 0.3s ease;
+                0 8px 32px rgba(0, 0, 0, 0.04),
+                inset 0 1px 1px rgba(255, 255, 255, 0.8),
+                inset 0 0 12px rgba(255, 255, 255, 0.2),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.02);
+            
+            position: relative; 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
         }
 
-        .glass-noise {
-            position: absolute; inset: 0; opacity: 0.3; pointer-events: none; mix-blend-mode: overlay; z-index: 1;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
+        .liquid-glass, .modal-glass { border-radius: 40px; }
+        .liquid-card { border-radius: 32px; }
+        .liquid-pill { border-radius: 9999px; }
 
-        .content-layer { position: relative; z-index: 10; }
+        .liquid-pill:hover, .liquid-glass:hover, .liquid-card:hover {
+            box-shadow: 
+                0 12px 48px rgba(0, 0, 0, 0.06),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9),
+                inset 0 0 16px rgba(255, 255, 255, 0.3),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.02);
+            transform: translateY(-2px);
+        }
 
         /* --- INPUTS & BUTTONS --- */
-        .crystal-input {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
-            padding: 20px;
-            font-family: 'Space Mono', monospace; /* Monospace for alignment */
-            font-size: 15px; /* Slightly larger */
-            font-weight: 500; /* Bolder */
+        .liquid-input {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            padding: 24px;
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 500;
             color: #1d1d1f;
             outline: none; resize: none;
             transition: all 0.3s;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+            width: 100%;
         }
-        .crystal-input:focus {
-            background: rgba(255, 255, 255, 0.8);
-            border-color: rgba(0, 122, 255, 0.5);
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        .liquid-input:focus {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 
+                inset 0 2px 10px rgba(0,0,0,0.02),
+                0 0 0 4px rgba(255, 255, 255, 0.3);
         }
 
         .primary-btn { 
-            background: #1d1d1f; color: white; border: none; font-weight: 700; /* Bolder */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: rgba(0, 0, 0, 0.8); 
+            backdrop-filter: blur(10px);
+            color: white; border: 1px solid rgba(255,255,255,0.2); 
+            font-weight: 700; border-radius: 9999px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.2);
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .primary-btn:hover { 
-            background: #000; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); 
-            transform: translateY(-2px); 
+            background: rgba(0, 0, 0, 1); 
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); 
+            transform: translateY(-2px) scale(1.02); 
         }
 
-        .crystal-btn {
-            background: rgba(255, 255, 255, 0.5); 
-            border: 1px solid rgba(255, 255, 255, 0.8); 
-            color: #1d1d1f; font-weight: 600; /* Bolder */
-            transition: all 0.3s; 
-            backdrop-filter: blur(10px);
-        }
-        .crystal-btn:hover { 
-            background: white; border-color: rgba(0, 0, 0, 0.1); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            transform: translateY(-1px);
-        }
-
-        .delete-btn {
-            color: #ef4444; background: rgba(254, 226, 226, 0.3);
-            border: 1px solid rgba(252, 165, 165, 0.2); transition: all 0.2s;
-        }
-        .delete-btn:hover { background: #fee2e2; border-color: #fca5a5; }
-
-        /* --- LIST ITEMS (NO FLICKER) --- */
-        .token-item {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            padding: 16px;
-            transition: transform 0.2s, background 0.2s;
-            animation: slideIn 0.4s ease-out forwards;
-        }
-        .token-item:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: scale(1.01);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            z-index: 5;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        /* --- PROGRESS BAR --- */
         .progress-bar {
-            height: 6px; /* Slightly thicker */
+            height: 8px;
             border-radius: 99px; width: 100%;
-            background: rgba(0,0,0,0.05); overflow: hidden;
+            background: rgba(0,0,0,0.08); 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         .progress-fill {
-            height: 100%; background: #3b82f6; border-radius: 99px;
-            transition: width 1s linear, background-color 0.3s;
+            height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); 
+            border-radius: 99px;
+            transition: width 1s linear, background 0.3s;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
         }
 
-        /* --- MODAL (POPUP) --- */
+        /* --- UI EFFECTS --- */
         .modal-overlay {
             position: fixed; inset: 0; z-index: 100;
-            background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(8px);
+            background: rgba(229, 229, 234, 0.3); backdrop-filter: blur(4px);
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
 
         .modal-glass {
-            width: 90%; max-width: 400px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(40px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 32px; padding: 32px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            transform: scale(0.95) translateY(10px);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 90%; max-width: 420px; padding: 40px;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .modal-overlay.open .modal-glass { transform: scale(1) translateY(0); }
 
-        /* --- TOAST --- */
         .toast {
-            position: fixed; top: 24px; right: 24px;
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
-            padding: 12px 20px; border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 200; display: flex; align-items: center; gap: 10px;
-            font-weight: 600; font-size: 14px;
+            position: fixed; top: 32px; right: 32px;
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(25px) saturate(200%);
+            padding: 16px 24px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1), inset 0 2px 5px rgba(255,255,255,0.8);
+            transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 200; display: flex; align-items: center; gap: 12px;
+            font-weight: 700; font-size: 14px;
         }
         .toast.show { transform: translateX(0); }
 
-        /* --- MISC --- */
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        /* NEW FONT FOR CODE - BOLD & CLEAN */
+        /* Hiệu ứng mờ dần ở 2 đầu thanh cuộn giúp danh sách nhìn chuyên nghiệp hơn */
+        .fade-scroll {
+            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 0px; }
         .otp-font { 
             font-family: 'Space Mono', monospace; 
             font-variant-numeric: tabular-nums; 
-            letter-spacing: -0.5px;
-            font-weight: 700; /* Bold */
+            letter-spacing: -1px;
+            font-weight: 700;
         }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 md:p-8">
 
-    <canvas id="fluid-canvas"></canvas>
-
-    <!-- MAIN LAYOUT (WIDE DESKTOP LAYOUT) -->
-    <div class="w-full max-w-[1400px] grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+    <!-- MAIN LAYOUT: Giới hạn chiều cao tổng thể để tạo cảm giác giống App Desktop -->
+    <div class="w-full max-w-[1200px] flex flex-col lg:flex-row gap-8 relative z-10 lg:h-[calc(100vh-6rem)] lg:max-h-[720px] lg:min-h-[600px] items-stretch">
         
-        <!-- HEADER (Mobile Only) -->
-        <div class="lg:hidden col-span-1 text-center mb-2">
-            <h1 class="text-xl font-bold text-gray-900">Crystal Auth</h1>
-        </div>
-
-        <!-- LEFT PANEL: QUICK ACCESS (7 Cols) - HORIZONTAL LAYOUT -->
-        <div class="glass-panel col-span-1 lg:col-span-7 p-8 flex flex-col h-[640px]">
-            <div class="glass-noise"></div>
-            <div class="content-layer h-full flex flex-col">
-                
-                <h2 class="text-xl font-bold flex items-center gap-2 mb-6 text-gray-800 tracking-tight">
-                    <i data-lucide="zap" class="w-6 h-6 text-yellow-500 fill-yellow-500"></i>
-                    Lấy Mã Nhanh
+        <!-- ================= LEFT COLUMN: QUICK ACCESS ================= -->
+        <div class="flex-1 flex flex-col gap-6">
+            
+            <!-- Floating Header -->
+            <div class="liquid-pill px-8 py-5 flex items-center justify-between shrink-0">
+                <h2 class="text-xl font-bold flex items-center gap-3 text-gray-800 tracking-tight">
+                    <div class="w-10 h-10 rounded-full bg-white/30 flex items-center justify-center border border-white/60 shadow-sm backdrop-blur-md">
+                        <i data-lucide="zap" class="w-5 h-5 text-blue-500 fill-blue-500"></i>
+                    </div>
+                    Liquid Auth
                 </h2>
+                <div class="text-right">
+                    <div id="date-display" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">...</div>
+                    <div id="clock-display" class="text-lg font-bold text-gray-800 otp-font leading-none mt-0.5">00:00:00</div>
+                    <button id="btn-sync" class="hidden"></button> 
+                </div>
+            </div>
 
-                <!-- SPLIT AREA: Input (Left) & Result (Right) -->
-                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Input Zone (Sử dụng flex-1 để tự động co giãn) -->
+            <div class="liquid-glass p-6 flex flex-col relative group flex-1 min-h-[250px] lg:min-h-0">
+                <div class="absolute top-8 right-8 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="window.clearQuickInput()" class="w-10 h-10 rounded-full bg-white/40 hover:bg-white border border-white/80 text-gray-600 hover:text-red-500 flex items-center justify-center transition-all shadow-sm backdrop-blur-md" title="Xóa nội dung">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <label class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 ml-2 flex items-center gap-2">
+                    <i data-lucide="key" class="w-3 h-3"></i> Secret Key
+                </label>
+                <textarea 
+                    id="quick-input" 
+                    class="liquid-input flex-1 relative z-10"
+                    placeholder="Dán mã bí mật vào đây..."
+                    oninput="window.handleQuickInput(this)"></textarea>
+            </div>
+
+            <!-- Result Zone -->
+            <div id="result-zone" class="liquid-glass p-8 flex flex-col items-center justify-center text-center relative flex-1 min-h-[250px] lg:min-h-0 overflow-hidden">
+                
+                <!-- Empty State -->
+                <div id="result-empty" class="absolute inset-0 flex flex-col items-center justify-center opacity-100 transition-all duration-500 z-10">
+                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/40 backdrop-blur-md">
+                        <i data-lucide="lock" class="w-8 h-8 text-gray-500"></i>
+                    </div>
+                    <p class="text-sm font-bold text-gray-500">Chưa có mã nào được tạo</p>
+                </div>
+
+                <!-- Content State -->
+                <div id="result-content" class="w-full flex flex-col items-center justify-center h-full opacity-0 pointer-events-none transition-all duration-500 scale-90 transform z-10">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Mã Xác Thực</p>
                     
-                    <!-- 1. INPUT ZONE -->
-                    <div class="relative bg-white/40 rounded-[24px] border border-white/60 shadow-sm p-1 flex flex-col group transition-all h-full hover:bg-white/50">
-                        <div class="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="window.clearQuickInput()" class="w-8 h-8 rounded-full bg-white/80 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors shadow-sm" title="Xóa nội dung">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        <textarea 
-                            id="quick-input" 
-                            class="crystal-input w-full h-full text-base leading-relaxed placeholder-gray-400 bg-transparent shadow-none border-none focus:shadow-none focus:border-none p-6 resize-none font-medium"
-                            placeholder="Dán Secret Key vào đây..."
-                            oninput="window.handleQuickInput(this)"></textarea>
-                        
-                        <div class="absolute bottom-4 right-4 flex items-center gap-2 text-[11px] font-bold text-gray-400 pointer-events-none uppercase tracking-wide">
-                            <i data-lucide="keyboard" class="w-3 h-3"></i> Auto-Detect
+                    <div class="relative mb-6 cursor-pointer group w-full" onclick="window.copyResultText()">
+                        <div id="quick-otp" class="otp-font text-6xl md:text-7xl font-bold text-gray-900 transition-transform group-hover:scale-105 select-none break-all tracking-tighter drop-shadow-sm">
+                            --- ---
                         </div>
                     </div>
 
-                    <!-- 2. RESULT ZONE -->
-                    <div id="result-zone" class="relative bg-white/60 backdrop-blur-xl rounded-[24px] border border-white/80 shadow-md p-6 flex flex-col items-center justify-center text-center transition-all h-full">
-                        
-                        <!-- Empty State -->
-                        <div id="result-empty" class="absolute inset-0 flex flex-col items-center justify-center opacity-100 transition-opacity duration-300">
-                            <div class="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mb-4 shadow-sm border border-white/60">
-                                <i data-lucide="lock" class="w-8 h-8 text-gray-400"></i>
-                            </div>
-                            <p class="text-sm font-bold text-gray-400">Chưa có mã nào</p>
+                    <div class="w-full max-w-[200px] mb-6">
+                        <div class="progress-bar">
+                            <div id="quick-progress" class="progress-fill w-full"></div>
                         </div>
+                    </div>
 
-                        <!-- Content State -->
-                        <div id="result-content" class="w-full flex flex-col items-center justify-center h-full opacity-0 pointer-events-none transition-opacity duration-300 scale-95 transform">
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-auto pt-4">Mã Xác Thực</p>
-                            
-                            <!-- Big Code -->
-                            <div class="relative mb-8 cursor-pointer group w-full my-auto" onclick="window.copyResultText()">
-                                <div id="quick-otp" class="otp-font text-5xl md:text-6xl font-bold text-gray-800 transition-transform group-hover:scale-105 select-none break-all tracking-tight">
-                                    --- ---
-                                </div>
-                                <p class="text-[11px] font-bold text-blue-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity absolute w-full -bottom-6 left-0 uppercase tracking-wide">Nhấn để sao chép</p>
-                            </div>
-
-                            <!-- Progress & Actions -->
-                            <div class="w-full mt-auto pb-4">
-                                <div class="w-32 h-2 bg-gray-200/80 rounded-full mb-6 overflow-hidden mx-auto">
-                                    <div id="quick-progress" class="h-full bg-blue-500 w-full transition-all duration-1000 ease-linear"></div>
-                                </div>
-
-                                <div class="flex gap-3 w-full">
-                                    <button onclick="window.copyResultText()" class="primary-btn flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs uppercase tracking-wide">
-                                        <i data-lucide="copy" class="w-4 h-4"></i> Sao chép
-                                    </button>
-                                    <button onclick="window.openSaveModal()" class="crystal-btn w-12 rounded-xl flex items-center justify-center hover:text-blue-600 transition-colors" title="Lưu">
-                                        <i data-lucide="save" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
+                    <div class="flex gap-4 w-full justify-center">
+                        <button onclick="window.copyResultText()" class="primary-btn px-8 py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                            <i data-lucide="copy" class="w-4 h-4"></i> Sao chép
+                        </button>
+                        <button onclick="window.openSaveModal()" class="liquid-pill w-14 h-14 flex items-center justify-center bg-white/20 hover:bg-white/50 border border-white/30 text-gray-700 transition-colors backdrop-blur-md shadow-sm" title="Lưu vào Kho">
+                            <i data-lucide="bookmark-plus" class="w-5 h-5"></i>
+                        </button>
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <!-- RIGHT PANEL: VAULT (5 Cols) -->
-        <div class="glass-panel col-span-1 lg:col-span-5 flex flex-col h-[640px]">
-            <div class="glass-noise"></div>
-            <div class="content-layer flex-1 flex flex-col h-full">
+        <!-- ================= RIGHT COLUMN: VAULT ================= -->
+        <div class="flex-1 lg:max-w-[500px] flex flex-col gap-6">
+            
+            <!-- Search & Add -->
+            <div class="liquid-pill p-2 pl-6 flex items-center gap-4 shrink-0">
+                <i data-lucide="search" class="w-5 h-5 text-gray-500 z-10"></i>
+                <input type="text" placeholder="Tìm kiếm trong kho..." oninput="window.filterTokens(this.value)" class="flex-1 bg-transparent border-none outline-none text-base font-medium text-gray-800 placeholder-gray-500 z-10">
+                <button onclick="window.openSaveModal(true)" class="primary-btn w-12 h-12 flex items-center justify-center hover:rotate-90 transition-transform duration-300 z-10" title="Thêm thủ công">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- List Area Container: Bị khóa chiều cao để nội dung bên trong tự động scroll -->
+            <div class="liquid-glass flex-1 flex flex-col min-h-[400px] lg:min-h-0 relative p-6">
                 
-                <!-- Date/Time Header (Removed Sync Button) -->
-                <div class="p-6 border-b border-white/50 bg-white/20 flex justify-between items-center">
-                    <div>
-                        <div id="date-display" class="text-xs font-bold text-gray-500 uppercase tracking-wide">...</div>
-                        <div id="clock-display" class="text-3xl font-bold text-gray-800 otp-font leading-none mt-1 tracking-tight">00:00:00</div>
-                    </div>
-                    <!-- Sync Button Hidden -->
-                    <button id="btn-sync" class="hidden"></button> 
-                </div>
-
-                <!-- Search -->
-                <div class="px-6 py-4">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                        <input type="text" placeholder="Tìm kiếm..." oninput="window.filterTokens(this.value)" class="w-full bg-white/40 border border-white/60 rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-gray-800 outline-none focus:bg-white/80 focus:border-blue-400 transition-all shadow-inner">
-                    </div>
-                </div>
-
-                <!-- The List -->
-                <div class="flex-1 overflow-y-auto px-4 pb-4 custom-scroll space-y-3" id="token-list">
-                    <!-- Items -->
-                </div>
-
-                <!-- Footer Actions -->
-                <div class="p-5 border-t border-white/50 bg-white/20 flex gap-3">
-                    <button onclick="window.openSaveModal(true)" class="crystal-btn flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 hover:text-black shadow-sm">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Thêm thủ công
-                    </button>
+                <div class="flex justify-between items-center mb-6 px-2 relative z-10 shrink-0">
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-widest">Kho Mã Của Bạn</h3>
                     <div class="flex gap-2">
-                        <button onclick="window.exportData()" class="crystal-btn w-12 rounded-xl flex items-center justify-center text-gray-500 hover:text-blue-600 shadow-sm" title="Backup">
+                        <button onclick="window.exportData()" class="w-8 h-8 rounded-full bg-white/30 hover:bg-white border border-white/40 flex items-center justify-center text-gray-600 transition-colors backdrop-blur-md" title="Backup">
                             <i data-lucide="download" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="document.getElementById('import-file').click()" class="crystal-btn w-12 rounded-xl flex items-center justify-center text-gray-500 hover:text-green-600 shadow-sm" title="Restore">
+                        <button onclick="document.getElementById('import-file').click()" class="w-8 h-8 rounded-full bg-white/30 hover:bg-white border border-white/40 flex items-center justify-center text-gray-600 transition-colors backdrop-blur-md" title="Restore">
                             <i data-lucide="upload" class="w-4 h-4"></i>
                         </button>
                         <input type="file" id="import-file" class="hidden" accept=".json" onchange="window.importData(this)">
                     </div>
                 </div>
 
+                <!-- Scroll List (áp dụng fade-scroll) -->
+                <div class="flex-1 overflow-y-auto custom-scroll space-y-3 pb-4 pt-1 relative z-10 fade-scroll" id="token-list">
+                    <!-- Items generated here. -->
+                </div>
             </div>
+
         </div>
 
     </div>
 
-    <!-- MODAL (Transparent Glass) -->
+    <!-- ================= MODAL ================= -->
     <div id="save-modal" class="modal-overlay">
         <div class="modal-glass">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <i data-lucide="save" class="w-5 h-5 text-blue-600"></i> Lưu Mã
-                </h3>
-                <button onclick="window.closeModal()" class="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-colors">
-                    <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+            <div class="flex justify-between items-center mb-8 relative z-10">
+                <div class="w-12 h-12 rounded-full bg-blue-50/50 backdrop-blur-md flex items-center justify-center border border-white/60">
+                    <i data-lucide="bookmark" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <button onclick="window.closeModal()" class="w-10 h-10 rounded-full bg-gray-100/30 backdrop-blur-md border border-white/50 hover:bg-white flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
                 </button>
             </div>
             
-            <div class="space-y-5">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 relative z-10">Lưu Mã Mới</h3>
+
+            <div class="space-y-6 relative z-10">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Tên dịch vụ</label>
-                    <input type="text" id="modal-label" placeholder="Ví dụ: Google, Facebook..." class="crystal-input w-full p-3 text-base font-medium rounded-xl bg-white/60 focus:bg-white" autofocus>
+                    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 ml-2">Tên dịch vụ</label>
+                    <input type="text" id="modal-label" placeholder="Ví dụ: Google, Github..." class="liquid-input p-4 text-lg" autofocus>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Secret Key</label>
-                    <input type="text" id="modal-secret" placeholder="Mã khóa..." class="crystal-input w-full p-3 text-sm font-mono font-medium rounded-xl bg-white/60 focus:bg-white text-gray-600">
+                    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 ml-2">Secret Key</label>
+                    <input type="text" id="modal-secret" placeholder="Mã khóa..." class="liquid-input p-4 text-sm font-mono text-gray-600">
                 </div>
                 
-                <button onclick="window.addTokenFromModal()" class="primary-btn w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 mt-2">
-                    Lưu vào Kho
+                <button onclick="window.addTokenFromModal()" class="primary-btn w-full py-4 mt-4 text-base tracking-widest">
+                    LƯU VÀO KHO
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- TOAST -->
+    <!-- ================= TOAST ================= -->
     <div id="toast" class="toast">
-        <div class="bg-green-100 p-1 rounded-full"><i data-lucide="check" class="w-4 h-4 text-green-600"></i></div>
+        <div class="bg-green-500 rounded-full p-1.5 shadow-md border border-white/50"><i data-lucide="check" class="w-4 h-4 text-white"></i></div>
         <span id="toast-msg">Thành công</span>
     </div>
 
     <script>
-        // --- ANIMATED BACKGROUND ---
-        const canvas = document.getElementById('fluid-canvas');
-        const ctxBg = canvas.getContext('2d');
-        let width, height, orbs = [];
-        const colors = [{r:59,g:130,b:246}, {r:139,g:92,b:246}, {r:236,g:72,b:153}, {r:16,g:185,b:129}];
-
-        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
-        class Orb {
-            constructor() { this.init(); }
-            init() { 
-                this.radius = Math.random()*120+80; this.x = Math.random()*width; this.y = Math.random()*height; 
-                this.vx = (Math.random()-0.5)*0.5; this.vy = (Math.random()-0.5)*0.5; 
-                this.color = colors[Math.floor(Math.random()*colors.length)]; 
-            }
-            update() { 
-                this.x+=this.vx; this.y+=this.vy; 
-                if(this.x<-200||this.x>width+200) this.vx*=-1; if(this.y<-200||this.y>height+200) this.vy*=-1; 
-            }
-            draw(ctx) { 
-                const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.radius);
-                g.addColorStop(0,`rgba(${this.color.r},${this.color.g},${this.color.b},0.3)`); 
-                g.addColorStop(1,`rgba(${this.color.r},${this.color.g},${this.color.b},0)`); 
-                ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fillStyle=g; 
-                ctx.globalCompositeOperation='multiply'; ctx.fill(); 
-            }
-        }
-        function initBackground() { resize(); orbs=[]; for(let i=0;i<6;i++) orbs.push(new Orb()); loop(); }
-        function loop() { ctxBg.clearRect(0,0,width,height); orbs.forEach(o=>{o.update();o.draw(ctxBg)}); requestAnimationFrame(loop); }
-        window.addEventListener('resize', ()=>{resize(); initBackground();}); initBackground();
-
-        // --- GLOBAL VARIABLES (Accessible from HTML) ---
+        // ==========================================
+        // APP LOGIC (2FA)
+        // ==========================================
         let tokens = JSON.parse(localStorage.getItem('2fa_tokens')) || [];
         let currentQuickSecret = null;
         let quickInterval = null;
         let currentFilter = "";
-        let timeOffset = 0;
         let referenceServerTime = null;
         let referencePerfTime = null;
 
-        // Init Lucide
         lucide.createIcons();
 
-        // --- GLOBAL FUNCTIONS EXPOSED TO WINDOW ---
-        
         window.updateClock = function() {
             const now = new Date();
             const dateOpts = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
             const timeOpts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            
             document.getElementById('date-display').innerText = now.toLocaleDateString('vi-VN', dateOpts);
             document.getElementById('clock-display').innerText = now.toLocaleTimeString('vi-VN', timeOpts);
         }
 
         window.syncTime = async function() {
-            // No button spinning since it is hidden
             const setTime = (serverTime) => {
-                referenceServerTime = serverTime;
-                referencePerfTime = performance.now();
-                window.updateVaultUI(); // Instant update
-                if(currentQuickSecret) window.updateQuickDisplay();
+                referenceServerTime = serverTime; referencePerfTime = performance.now();
+                window.updateVaultUI(); if(currentQuickSecret) window.updateQuickDisplay();
             };
-
             try {
-                const s = performance.now();
-                const r = await fetch('https://1.1.1.1/cdn-cgi/trace');
+                const s = performance.now(); const r = await fetch('https://1.1.1.1/cdn-cgi/trace');
                 if(r.ok) {
-                    const t = await r.text();
-                    const m = t.match(/ts=([0-9\.]+)/);
+                    const t = await r.text(); const m = t.match(/ts=([0-9\.]+)/);
                     if(m) return setTime(parseFloat(m[1])*1000 + (performance.now()-s)/2);
                 }
             } catch(e) {}
-            
-            // Fallback
-            referenceServerTime = Date.now();
-            referencePerfTime = performance.now();
+            referenceServerTime = Date.now(); referencePerfTime = performance.now();
         }
 
         window.getCorrectTime = function() {
             return (referenceServerTime && referencePerfTime) 
-                ? referenceServerTime + (performance.now() - referencePerfTime) 
-                : Date.now();
+                ? referenceServerTime + (performance.now() - referencePerfTime) : Date.now();
         }
 
-        // --- VAULT ENGINE ---
-        
         window.rebuildList = function() {
             const list = document.getElementById('token-list');
             const filtered = tokens.filter(t => t.label.toLowerCase().includes(currentFilter));
@@ -439,9 +359,9 @@
 
             if(filtered.length === 0) {
                 list.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-40 opacity-40 text-gray-500">
-                        <i data-lucide="archive" class="w-10 h-10 mb-2"></i>
-                        <p class="text-xs font-bold uppercase tracking-wide">Kho trống</p>
+                    <div class="flex flex-col items-center justify-center h-full opacity-50 text-gray-500">
+                        <i data-lucide="ghost" class="w-12 h-12 mb-4"></i>
+                        <p class="text-[11px] font-bold uppercase tracking-widest">Kho trống</p>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -449,30 +369,31 @@
 
             filtered.forEach(token => {
                 const el = document.createElement('div');
-                el.className = 'token-item group relative overflow-hidden';
+                // Chỉnh sửa thẻ nhỏ gọn hơn: p-4 thay vì p-5, gap-2 thay vì gap-3
+                el.className = 'liquid-card group relative overflow-hidden p-4 flex flex-col gap-2 transition-all hover:scale-[1.02]';
                 el.setAttribute('data-id', token.id);
                 el.setAttribute('data-secret', token.secret); 
                 
                 el.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="min-w-0 pr-4">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5 truncate">${token.label}</p>
-                            <div class="token-code text-2xl font-bold text-gray-800 otp-font tracking-tight">--- ---</div>
+                    <div class="flex justify-between items-center relative z-10">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5 truncate">${token.label}</p>
+                            <div class="token-code text-2xl font-bold text-gray-900 otp-font tracking-tight">--- ---</div>
                         </div>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <button class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors shadow-sm" onclick="window.copyTokenCode('${token.secret}')">
+                        <div class="flex flex-row gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button class="w-8 h-8 rounded-full bg-white/60 border border-white/50 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:bg-white transition-all shadow-sm backdrop-blur-md" onclick="window.copyTokenCode('${token.secret}')" title="Copy">
                                 <i data-lucide="copy" class="w-4 h-4"></i>
                             </button>
-                            <button class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors shadow-sm delete-btn" onclick="window.deleteToken(${token.id})">
+                            <button class="w-8 h-8 rounded-full bg-white/60 border border-white/50 flex items-center justify-center text-gray-700 hover:text-red-500 hover:bg-white transition-all shadow-sm backdrop-blur-md" onclick="window.deleteToken(${token.id})" title="Delete">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="progress-bar">
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="progress-bar h-1 flex-1 bg-black/5">
                             <div class="progress-fill" style="width: 100%"></div>
                         </div>
-                        <div class="token-timer text-[10px] font-mono font-bold text-gray-400 w-6 text-right">30s</div>
+                        <div class="token-timer text-[10px] font-mono font-bold text-gray-500 w-6 text-right">30s</div>
                     </div>
                 `;
                 list.appendChild(el);
@@ -483,7 +404,7 @@
 
         window.updateVaultUI = function() {
             const now = window.getCorrectTime();
-            const items = document.querySelectorAll('.token-item');
+            const items = document.querySelectorAll('#token-list > .liquid-card');
 
             items.forEach(el => {
                 const secret = el.getAttribute('data-secret');
@@ -508,11 +429,11 @@
                     fillEl.style.width = `${pct}%`;
 
                     if(countDown < 5) {
-                        fillEl.style.backgroundColor = '#ef4444'; 
+                        fillEl.style.background = 'linear-gradient(90deg, #ef4444, #f87171)'; 
                         timerEl.classList.add('text-red-500');
                         codeEl.classList.add('text-red-500');
                     } else {
-                        fillEl.style.backgroundColor = '#3b82f6';
+                        fillEl.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
                         timerEl.classList.remove('text-red-500');
                         codeEl.classList.remove('text-red-500');
                     }
@@ -520,7 +441,6 @@
             });
         }
 
-        // --- QUICK INPUT ---
         window.clearQuickInput = function() {
             document.getElementById('quick-input').value = '';
             window.handleQuickInput({value: ''});
@@ -537,8 +457,7 @@
             const secret = raw.replace(/\s/g, '').toUpperCase();
 
             try {
-                const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret) });
-                totp.generate(); 
+                new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret) }).generate(); 
                 currentQuickSecret = secret;
                 window.showQuickResult();
             } catch(e) {}
@@ -549,9 +468,15 @@
             const content = document.getElementById('result-content');
             
             empty.style.opacity = '0';
-            content.style.opacity = '1';
-            content.style.pointerEvents = 'auto';
-            content.style.transform = 'scale(1)';
+            empty.style.transform = 'scale(0.8)';
+            setTimeout(() => { empty.style.display = 'none'; }, 300);
+            
+            content.style.display = 'flex';
+            setTimeout(() => {
+                content.style.opacity = '1';
+                content.style.pointerEvents = 'auto';
+                content.style.transform = 'scale(1)';
+            }, 50);
             
             if(quickInterval) clearInterval(quickInterval);
             quickInterval = setInterval(window.updateQuickDisplay, 100);
@@ -562,10 +487,16 @@
             const empty = document.getElementById('result-empty');
             const content = document.getElementById('result-content');
             
-            empty.style.opacity = '1';
             content.style.opacity = '0';
             content.style.pointerEvents = 'none';
-            content.style.transform = 'scale(0.95)';
+            content.style.transform = 'scale(0.9)';
+            setTimeout(() => { content.style.display = 'none'; }, 300);
+            
+            empty.style.display = 'flex';
+            setTimeout(() => {
+                empty.style.opacity = '1';
+                empty.style.transform = 'scale(1)';
+            }, 50);
 
             currentQuickSecret = null;
             if(quickInterval) clearInterval(quickInterval);
@@ -589,36 +520,26 @@
             bar.style.width = `${pct}%`;
             
             if(countDown < 5) {
-                bar.style.backgroundColor = '#ef4444';
+                bar.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
                 el.classList.add('text-red-500');
             } else {
-                bar.style.backgroundColor = '#3b82f6';
+                bar.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
                 el.classList.remove('text-red-500');
             }
         }
 
-        // --- MODAL ---
         window.openSaveModal = function(isManual = false) {
             const modal = document.getElementById('save-modal');
             const lbl = document.getElementById('modal-label');
             const sec = document.getElementById('modal-secret');
 
-            if(isManual) {
-                currentQuickSecret = null;
-                sec.value = "";
-                lbl.value = "";
-            } else {
-                sec.value = currentQuickSecret || "";
-                lbl.value = "";
-            }
-
+            sec.value = isManual ? "" : (currentQuickSecret || "");
+            lbl.value = "";
             modal.classList.add('open');
             setTimeout(() => lbl.focus(), 100);
         };
 
-        window.closeModal = function() {
-            document.getElementById('save-modal').classList.remove('open');
-        };
+        window.closeModal = function() { document.getElementById('save-modal').classList.remove('open'); };
 
         window.addTokenFromModal = function() {
             const l = document.getElementById('modal-label').value;
@@ -627,52 +548,27 @@
             try {
                 new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(s) }).generate();
                 tokens.push({ id: Date.now(), label: l || "Dịch vụ", secret: s });
-                window.saveTokens();
-                window.closeModal();
+                window.saveTokens(); window.closeModal();
                 if(currentQuickSecret && s === currentQuickSecret) {
                     document.getElementById('quick-input').value = '';
                     window.resetQuickView();
                 }
-                window.showToast("Đã lưu thành công");
+                window.showToast("Đã lưu vào kho");
             } catch(e) { window.showToast("Mã khóa không hợp lệ", "alert-circle"); }
         };
 
-        // --- UTILS ---
-        window.saveTokens = function() {
-            localStorage.setItem('2fa_tokens', JSON.stringify(tokens));
-            window.rebuildList();
-        };
-
-        window.deleteToken = function(id) {
-            if(confirm("Xóa mã này?")) {
-                tokens = tokens.filter(t => t.id !== id);
-                window.saveTokens();
-            }
-        };
-
-        window.filterTokens = function(val) {
-            currentFilter = val.toLowerCase();
-            window.rebuildList();
-        };
-
-        window.copyResultText = function() {
-            const el = document.getElementById('quick-otp');
-            window.copyText(el.innerText.replace(/\s/g, ''));
-        };
-
-        window.copyTokenCode = function(secret) {
-            const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret) });
-            window.copyText(totp.generate({timestamp: window.getCorrectTime()}));
-        };
+        window.saveTokens = function() { localStorage.setItem('2fa_tokens', JSON.stringify(tokens)); window.rebuildList(); };
+        window.deleteToken = function(id) { if(confirm("Xóa mã này?")) { tokens = tokens.filter(t => t.id !== id); window.saveTokens(); } };
+        window.filterTokens = function(val) { currentFilter = val.toLowerCase(); window.rebuildList(); };
+        window.copyResultText = function() { window.copyText(document.getElementById('quick-otp').innerText.replace(/\s/g, '')); };
+        window.copyTokenCode = function(secret) { window.copyText(new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret) }).generate({timestamp: window.getCorrectTime()})); };
 
         window.copyText = function(text) {
             const fallback = () => {
                 try {
-                    const ta = document.createElement("textarea");
-                    ta.value = text;
+                    const ta = document.createElement("textarea"); ta.value = text;
                     ta.style.position="fixed"; ta.style.left="-9999px";
-                    document.body.appendChild(ta); ta.select();
-                    document.execCommand('copy'); document.body.removeChild(ta);
+                    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
                     window.showToast("Đã sao chép");
                 } catch(e) { window.showToast("Lỗi sao chép", "alert-circle"); }
             };
@@ -683,15 +579,14 @@
 
         window.showToast = function(msg, icon="check") {
             const t = document.getElementById('toast');
-            t.innerHTML = `<div class="bg-green-100 p-1 rounded-full"><i data-lucide="${icon}" class="w-4 h-4 text-green-600"></i></div><span>${msg}</span>`;
-            lucide.createIcons();
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         window.exportData = function() {
-            const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokens));
-            const a = document.createElement('a'); a.href = data; a.download = "2fa_backup.json"; a.click();
+            const a = document.createElement('a'); 
+            a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tokens)); 
+            a.download = "2fa_backup.json"; a.click();
         };
         
         window.importData = function(input) {
@@ -702,7 +597,7 @@
                     const d = JSON.parse(e.target.result);
                     if(Array.isArray(d)) {
                         d.forEach(t => { if(t.secret && !tokens.some(x=>x.secret===t.secret)) tokens.push({id:Date.now()+Math.random(), label:t.label, secret:t.secret}); });
-                        window.saveTokens(); window.showToast("Đã nhập dữ liệu");
+                        window.saveTokens(); window.showToast("Khôi phục thành công");
                     }
                 } catch(e) { window.showToast("File lỗi", "alert-circle"); }
             }; r.readAsText(f); input.value = '';
@@ -710,8 +605,7 @@
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            setInterval(window.updateClock, 1000);
-            window.updateClock();
+            setInterval(window.updateClock, 1000); window.updateClock();
             if(navigator.onLine) window.syncTime();
             setInterval(window.updateVaultUI, 100);
             window.rebuildList();
